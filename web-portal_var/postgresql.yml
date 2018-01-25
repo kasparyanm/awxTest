@@ -1,0 +1,21 @@
+postgres:
+  version: 10
+  port: 5432
+  cluster_name: main
+
+  users:
+    - name: user
+      password: 123
+#      role_attrs: SUPERUSER
+      dbs_name: TransGaz
+
+  dbs:
+    - name: TransGaz
+      owner: user
+      initial_sql: ""
+      dump_file: ""
+
+  dump_file_exist: False
+
+postgis:
+  version: 2.4

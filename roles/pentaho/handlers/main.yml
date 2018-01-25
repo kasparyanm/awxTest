@@ -1,0 +1,12 @@
+---
+- name: enable pentahoDI
+  systemd:
+    name: pentahoDI
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: restart pentahoDI
+  systemd: name=pentahoDI state=restarted
+  become: true
+  become_user: root

@@ -1,0 +1,6 @@
+---
+dotnet_web_directory: /opt/aeronet/gazprom_transgaz/
+dotnet_web_artifact_url: http://artifacts.aeronet.dev/builds/web-arms/latest/
+dotnet_web_dll: web.dll
+nginx_vhost_path: /etc/nginx/sites-enabled
+nginx_default_vhost_path: /etc/nginx/sites-enabled/default

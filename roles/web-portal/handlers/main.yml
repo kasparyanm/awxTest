@@ -1,0 +1,17 @@
+---
+- name: enable dotnet-web
+  systemd:
+    name: dotnet-web
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: restart dotnet-web
+  systemd: name=dotnet-web state=restarted
+  become: true
+  become_user: root
+
+- name: restart nginx
+  service: name=nginx state=restarted
+  become: true
+  become_user: root

@@ -1,0 +1,98 @@
+---
+- name: Add Postgresql apt key.
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    id: ACCC4CF8
+    state: present
+  register: add_repository_key
+  ignore_errors: true
+
+- name: Ensure curl is present (on older systems without SNI).
+  package: name=curl state=present
+  when: add_repository_key|failed
+
+- name: Add Postgresql apt key (alternative for older systems without SNI).
+  shell: "curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -"
+  args:
+    warn: no
+  when: add_repository_key|failed
+
+- name: Add specified repository into sources list.
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt xenial-pgdg main
+    state: present
+
+- name: install postgres packages
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - python-psycopg2
+    - postgresql-{{ postgres.version }}
+    - postgresql-contrib-{{ postgres.version }}
+
+- name: install postgis packages
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - postgresql-{{ postgres.version }}-postgis-{{postgis.version}}
+    - postgresql-{{ postgres.version }}-postgis-scripts
+  when: postgis is defined
+
+- name: copy pg_hba config
+  copy: src=pg_hba.conf dest=/etc/postgresql/{{ postgres.version }}/{{postgres.cluster_name}}/pg_hba.conf
+  notify: restart postgresql
+
+- name: copy postgres config
+  lineinfile: 
+    path: "{{ postgresql_conf_directory }}/postgresql.conf"
+    regexp: '^(.*)listen_addresses\s*='
+    line: "listen_addresses = '*'"
+    state: present
+  notify: restart postgresql
+
+- name: create users
+  postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    role_attr_flags: "{{ item.role_attrs }}"
+#    priv: "ALL{{ item.name }}/:ALL"
+    encrypted: yes
+  become: true
+  become_user: postgres
+  with_items: "{{ postgres.users }}"
+
+- name: create databases
+  postgresql_db:
+    name: "{{ item.name }}"
+    encoding: UTF-8
+    lc_collate: ru_RU.UTF-8
+    lc_ctype: ru_RU.UTF-8
+    template: template0
+    owner: "{{ item.owner }}"
+  with_items: "{{ postgres.dbs }}"
+  become: true
+  become_user: postgres
+
+- name: add postgis on all dbs
+  postgresql_ext:
+    name: postgis
+    db: "{{ item.name }}"
+  with_items: "{{ postgres.dbs }}"
+  become: true
+  become_user: postgres
+  when: postgis is defined
+
+#- name: copy dump
+#  copy:
+#    src: "{{ item.dump_file }}"
+#    dest: "/tmp/"
+#  with_items: "{{ postgres.dbs }}"
+#  when: postgres.dump_file_exist is defined and postgres.dump_file_exist
+
+- name: restore from dumps
+  postgresql_db:
+    name: "{{ item.name }}"
+    state: restore
+    target: "{{ item.dump_file }}"
+  become: true
+  become_user: postgres
+  with_items: "{{ postgres.dbs }}"
+  when: postgres.dump_file_exist is defined and postgres.dump_file_exist

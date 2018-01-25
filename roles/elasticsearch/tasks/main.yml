@@ -1,0 +1,55 @@
+---
+- name: add elasticsearch GPG key into apt
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+#    id: "88E42B4"
+    state: present
+  tags:
+  - elasticsearch
+
+- name: add elasticsearch repository
+  apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/{{ elasticsearch_version }}/apt stable main"
+    state: present
+  register: elasticsearch_repo_added
+  tags:
+  - elasticsearch
+
+- name: apt update cache
+  apt:
+    update_cache: yes
+  when: elasticsearch_repo_added.changed
+  tags:
+  - elasticsearch
+
+- name: install elasticsearch package
+  apt:
+    pkg: elasticsearch
+    state: present
+  tags:
+  - elasticsearch
+
+#- name: configure elasticsearch host
+#  lineinfile:
+#    path: "{{ elasticsearch_conf_directory }}/elasticsearch.yml"
+#    regexp: '^#network.host: 127.0.0.1'
+#    line: "network.bind_host: {{ elasticsearch_network_host }}"
+#    state: present
+#  notify: restart elasticsearch
+#
+#- name: configure elasticsearch port
+#  lineinfile:
+#    path: "{{ elasticsearch_conf_directory }}/elasticsearch.yml"
+#    regexp: '^#http.port: 9200'
+#    line: "http.port: {{ elasticsearch_network_port }}"
+#    state: present
+#  notify: restart elasticsearch
+
+- name: configure elasticsearch host
+  template:
+    src: elasticsearch.yml
+    dest: "{{ elasticsearch_conf_directory }}/elasticsearch.yml"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart elasticsearch

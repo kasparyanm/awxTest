@@ -1,0 +1,13 @@
+[Unit]
+Description=Pentaho Data Integration
+
+[Service]
+WorkingDirectory={{ pdi_data_path }}
+ExecStart={{ pdi_data_path }}/carte.sh {{ pdi_listen_address }} {{ pdi_listen_port }}
+Restart=always
+RestartSec=120
+SyslogIdentifier=pentahoDI
+#User=www-data
+
+[Install]
+WantedBy=multi-user.target

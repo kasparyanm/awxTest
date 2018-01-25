@@ -1,0 +1,5 @@
+---
+dependencies:
+  - { role: nginx }
+  - { role: dotnet-core }
+  - { role: postgresql }

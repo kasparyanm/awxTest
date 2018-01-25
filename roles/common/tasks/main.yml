@@ -1,0 +1,17 @@
+---
+- name: install APT packages
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - etckeeper
+
+- name: add locales
+  shell: locale-gen {{ item }}
+  with_items:
+    - ru_RU
+    - ru_RU.UTF-8
+    - en_US
+    - en_US.UTF-8
+
+- name: update locale
+  shell: update-locale ru_RU.UTF-8
+  

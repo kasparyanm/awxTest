@@ -1,0 +1,3 @@
+---
+deployer_directory: /opt/deployer
+deployer_artifact_url: http://artifacts.aeronet.dev/builds/deployer/latest/

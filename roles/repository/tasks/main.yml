@@ -1,0 +1,7 @@
+---
+- name: Configure nginx
+  template:
+    src: repository.nginx
+    dest: "{{ nginx_conf_dir }}/sites-enabled/"
+  notify:
+    - restart nginx

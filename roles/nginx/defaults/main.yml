@@ -1,0 +1,5 @@
+---
+nginx_binary_name: "nginx"
+nginx_conf_dir: /etc/nginx
+nginx_vhost_path: /etc/nginx/sites-enabled
+nginx_default_vhost_path: /etc/nginx/sites-enabled/default

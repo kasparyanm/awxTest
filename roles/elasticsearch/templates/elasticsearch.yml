@@ -1,0 +1,2 @@
+network.bind_host: {{ elasticsearch_network_host }}
+http.port: {{ elasticsearch_network_port }}

@@ -1,0 +1,4 @@
+- name: install rabbitmq-server
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - rabbitmq-server

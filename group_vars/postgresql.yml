@@ -1,0 +1,17 @@
+postgres:
+  version: 10
+  port: 5432
+  cluster_name: main
+  users:
+    - name: aeronet_user
+      password: aeronet_pass
+      role_attrs: SUPERUSER
+      dbs_name: test_db
+  dbs:
+    - name: test_db
+      owner: aeronet_user
+      initial_sql: ""
+      dump_file: "dump.sql"
+      
+postgis:
+  version: 2.4

@@ -1,0 +1,5 @@
+---
+- name: install APT packages
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - tomcat{{ tomcat_version }}

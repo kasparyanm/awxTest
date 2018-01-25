@@ -1,0 +1,16 @@
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	server_name _;
+
+	location / {
+		return 301 /builds/;
+	}
+
+	location /builds/ {
+		alias {{ repository_root_dir }}/;
+		try_files $uri $uri/ =404;
+		index index.html index.htm package.zip;
+	}
+}

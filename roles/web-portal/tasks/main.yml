@@ -1,0 +1,46 @@
+---
+- name: Download artifact
+  get_url:
+    dest: "/tmp/package.zip"
+    url: "{{ dotnet_web_artifact_url }}"
+    force: yes
+    owner: 0
+    group: 0
+    mode: 0644
+
+- name: install unzip
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - unzip
+
+- name: create webportal directory
+  file: >
+    state=directory
+    path={{ item }}
+  with_items:
+    - "{{ dotnet_web_directory }}"
+
+- name: Unpack artifact
+  unarchive:
+    src: "/tmp/package.zip"
+    dest: "{{ dotnet_web_directory }}"
+    remote_src: yes
+
+- name: Start dotnet-web as a service
+  template: src=dotnet-web.service dest=/etc/systemd/system/dotnet-web.service owner=root group=root mode=0644
+  notify: enable dotnet-web
+
+- name: Remove default nginx vhost config file (if configured).
+  file:
+    path: "{{ nginx_default_vhost_path }}"
+    state: absent
+  notify: restart nginx
+
+- name: Start dotnet-web as a service
+  template: src=dotnet-web.nginx dest=/etc/nginx/sites-enabled/dotnet-web.nginx owner=root group=root mode=0644
+  notify: restart nginx
+
+- name: restart dotnet-web
+  systemd: name=dotnet-web state=restarted
+  become: true
+  become_user: root

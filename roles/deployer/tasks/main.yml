@@ -1,0 +1,65 @@
+---
+- name: Download artifact
+  get_url:
+    dest: "/tmp/package.zip"
+    url: "{{ deployer_artifact_url }}"
+    force: yes
+    owner: 0
+    group: 0
+    mode: 0644
+
+- name: install unzip
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - unzip
+    - virtualenv
+    - python3-pip
+
+- name: create directory
+  file: >
+    state=directory
+    path={{ item }}
+  with_items:
+    - "{{ deployer_directory }}"
+
+- name: Unpack artifact
+  unarchive:
+    src: "/tmp/package.zip"
+    dest: "{{ deployer_directory }}"
+    remote_src: yes
+
+- name: Install python deps
+  pip:
+    requirements: "{{ deployer_directory }}/requirements.txt"
+    virtualenv: "{{ deployer_directory }}/.env"
+    virtualenv_python: python3
+
+- name: Apply migrations
+  django_manage:
+    command: migrate
+    app_path: "{{ deployer_directory }}"
+    virtualenv: "{{ deployer_directory }}/.env"
+
+#- name: Create superuser
+#  django_manage:
+#    command: migrate
+#    app_path: "createsuperuser --noinput --username=admin --email=admin@example.com"
+#    virtualenv: "{{ deployer_directory }}/.env"
+
+- name: uwsgi config file
+  template:
+    src: deployer-uwsgi.ini
+    dest: "{{ deployer_directory }}/deployer-api.ini"
+    owner: root
+    group: root
+    mode: 0644
+  register: uwsgi_config
+
+- name: Make deployer-api as a service
+  template: src=deployer-api.service dest=/etc/systemd/system/deployer-api.service owner=root group=root mode=0644
+#  notify: enable deployer-api
+
+- name: restart deployer-api
+  systemd: name=deployer-api state=restarted
+  become: true
+  become_user: root

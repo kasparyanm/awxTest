@@ -1,0 +1,127 @@
+---
+- name: "Debian | Installing repository {{ ansible_distribution }}"
+  apt_repository:
+    repo: "{{ item }} http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }}/ {{ ansible_distribution_release }} main"
+    state: present
+  when:
+    - zabbix_repo == "zabbix"
+  with_items:
+    - deb-src
+    - deb
+
+- name: "Debian | Install gpg key"
+  apt_key:
+    url: http://repo.zabbix.com/zabbix-official-repo.key
+    state: present
+  when:
+    - zabbix_repo == "zabbix"
+  register: result
+  until: '"failed" not in result'
+  retries: 3
+  delay: 5
+
+- name: "Debian | Installing zabbix-server-{{ database_type }}"
+  apt: pkg={{ item }} state=installed force=yes update_cache=yes
+  with_items:
+    - zabbix-server-{{ database_type }}
+    - zabbix-frontend-php
+    - php
+    - php-fpm
+    - php-pgsql
+    - php-bcmath
+    - php-mbstring
+    - php-gd
+    - php-xml
+
+- name: "Configure zabbix-server"
+  template:
+    src: zabbix_server.conf.j2
+    dest: "{{ zabbix_config_file }}"
+    owner: zabbix
+    group: zabbix
+    mode: 0644
+  notify:
+    - zabbix-server restarted
+
+- name: "Configure nginx"
+  template: src=zabbix_server.nginx.j2 dest=/etc/nginx/sites-enabled/zabbix_server.nginx owner=root group=root mode=0644
+  notify: restart nginx
+
+- name: "Configure php"
+  lineinfile:
+    path: "{{ php_config_file }}"
+    regexp: '^(.*)post_max_size\s*='
+    line: "post_max_size = 16M"
+    state: present
+  notify: php restarted
+
+- name: "Configure php"
+  lineinfile:
+    path: "{{ php_config_file }}"
+    regexp: '^(.*)memory_limit\s*='
+    line: "memory_limit = 128M"
+    state: present
+  notify: php restarted
+
+- name: "Configure php"
+  lineinfile:
+    path: "{{ php_config_file }}"
+    regexp: '^(.*)max_execution_time\s*='
+    line: "max_execution_time = 300"
+    state: present
+  notify: php restarted
+
+- name: "Configure php"
+  lineinfile:
+    path: "{{ php_config_file }}"
+    regexp: '^(.*)max_input_time\s*='
+    line: "max_input_time = 300"
+    state: present
+  notify: php restarted
+
+- name: "Configure php"
+  lineinfile:
+    path: "{{ php_config_file }}"
+    regexp: '^(.*)date.timezone\s*='
+    line: "date.timezone = Europe/Moscow"
+    state: present
+  notify: php restarted
+
+- name: "Create include dir zabbix-server"
+  file:
+    path: "{{ zabbix_server_include }}"
+    owner: zabbix
+    group: zabbix
+    state: directory
+    mode: 0755
+
+- name: restore sql dump
+  shell: zcat /usr/share/doc/zabbix-server-pgsql/create.sql.gz | sudo -u postgres psql {{ zabbix_server.dbname }}
+
+- name: frontend | Zabbix server php conf
+  template:
+     src=frontend/zabbix.conf.php
+     dest=/usr/share/zabbix/conf/zabbix.conf.php
+     owner=www-data
+     group=www-data
+     mode=600
+  notify:
+    - php restarted
+    - restart nginx
+
+- name: php restarted
+  service: name=php7.0-fpm state=started enabled=yes
+
+- name: "Zabbix-server started"
+  systemd:
+    name: zabbix-server
+    state: started
+    enabled: yes
+
+#- name: "NGINX restart"
+#  systemd:
+#    name: nginx
+#    state: restarted
+#    enable: yes
+
+

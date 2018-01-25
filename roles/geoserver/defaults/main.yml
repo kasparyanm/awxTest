@@ -1,0 +1,20 @@
+---
+# Geoserver major version number
+geoserver_version_major: '2'
+
+# Geoserver minor version number
+geoserver_version_minor: '12'
+
+# Geoserver patch version number
+geoserver_version_patch: '0'
+
+# concatenated Geoserver version
+geoserver_version: "{{ geoserver_version_major }}.{{ geoserver_version_minor }}.{{ geoserver_version_patch }}"
+
+# Mirror where to dowload Geoserver redistributable package from
+geoserver_mirror: "http://sourceforge.net/projects/geoserver/files/GeoServer"
+#geoserver_download_url: "https://downloads.sourceforge.net/project/geoserver/GeoServer/{{ geoserver_version }}/geoserver-{{ geoserver_version }}-bin.zip"
+#geoserver_download_url: "https://downloads.sourceforge.net/project/geoserver/GeoServer/{{ geoserver_version }}/geoserver-{{ geoserver_version }}-war.zip"
+geoserver_download_url: "http://artifacts.aeronet.dev/builds/geoserver-war/{{ geoserver_version }}/"
+
+geoserver_data_path: "/opt/geoserver"

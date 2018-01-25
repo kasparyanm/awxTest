@@ -1,0 +1,41 @@
+---
+- name: Assert platform is supported
+  tags: pdi
+  assert:
+    that:
+      - ansible_os_family in ['Ubuntu', 'Debian']
+
+- name: Download Pentaho Data Integration (remote)
+  tags: geoserver
+  get_url:
+    dest: "/tmp/pdi.zip"
+    url: "{{ pdi_download_url }}"
+    force: yes
+    owner: 0
+    group: 0
+    mode: 0644
+
+- name: install unzip
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - unzip
+
+#- name: Ensures {{pdi_data_path}} dir exists
+#  file: path={{pdi_data_path}} state=directory
+
+- name: install APT packages
+  apt: pkg={{ item }} state=installed force=yes
+  with_items:
+    - libwebkitgtk-1.0-0
+
+- name: Unpack Pentaho Data Integration
+  unarchive:
+    src: "/tmp/pdi.zip"
+    dest: "/opt/"
+    remote_src: yes
+
+- name: Start pentahoDI as a service
+  template: src=pentahoDI.service dest=/etc/systemd/system/pentahoDI.service owner=root group=root mode=0644
+  notify: enable pentahoDI
+
+

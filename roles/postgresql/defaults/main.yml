@@ -1,0 +1,7 @@
+#main.yml
+---
+
+postgresql_conf_directory: "/etc/postgresql/{{ postgres.version }}/{{ postgres.cluster_name }}"
+
+# postgres:
+#   version: 9.5

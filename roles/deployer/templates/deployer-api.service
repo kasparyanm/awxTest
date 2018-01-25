@@ -1,0 +1,12 @@
+[Unit]
+Description=Ansible Deployer API
+
+[Service]
+WorkingDirectory={{ deployer_directory }}
+ExecStart={{ deployer_directory }}/.env/bin/uwsgi {{ deployer_directory }}/deployer-api.ini
+Restart=always
+RestartSec=10
+SyslogIdentifier=ansible-deployer-api
+
+[Install]
+WantedBy=multi-user.target

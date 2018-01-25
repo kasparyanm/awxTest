@@ -1,0 +1,27 @@
+---
+- hosts: web-portal
+  gather_facts: False
+
+  tasks:
+  - name: kill apt
+    raw: if pgrep apt; then pkill apt; fi; sleep 2; if pgrep apt; then pkill apt; fi; dpkg --configure -a
+
+  - name: install python 2
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+- hosts: web-portal
+  become: true
+  roles:
+    - common
+    - web-portal
+
+  tasks:
+  - telegram:
+      token: "{{ telegram.token }}"
+      chat_id: "{{ telegram.chat_id }}"
+      msg: Ansible task finished
+
+  vars_files:
+    - "./web-portal_var/postgresql.yml"
+    - "./group_vars/common.yml"
+
